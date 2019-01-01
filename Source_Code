@@ -1,0 +1,144 @@
+#include "LedControl.h"
+#define DIN 13
+#define CS 12
+#define CLK 11
+
+byte A[8] = {0x18, 0x3c, 0x66, 0xc3, 0xff, 0xff, 0xc3, 0xc3};
+byte B[8] = {0x7c, 0x7e, 0x66, 0x7e, 0x7c, 0x66, 0x7e, 0x7c};
+byte C[8] = {0xff, 0xff, 0xc0, 0xc0, 0xc0, 0xc0, 0xff, 0xff};
+byte D[8] = {0xfc, 0xfe, 0xc7, 0xc7, 0xc7, 0xc7, 0xfe, 0xfc};
+byte E[8] = {0xff, 0xff, 0xc0, 0xf8, 0xf8, 0xc0, 0xff, 0xff};
+byte F[8] = {0xff, 0xff, 0xc0, 0xc0, 0xf8, 0xf8, 0xc0, 0xc0};
+byte G[8] = {0x7c, 0xfe, 0xc0, 0xc0, 0xce, 0xc6, 0xfe, 0x7e};
+byte H[8] = {0xc3, 0xc3, 0xc3, 0xff, 0xff, 0xc3, 0xc3, 0xc3};
+byte I[8] = {0xff, 0xff, 0x18, 0x18, 0x18, 0x18, 0xff, 0xff};
+byte J[8] = {0xff, 0xff, 0x18, 0x18, 0x18, 0x18, 0xf8, 0xf8};
+byte K[8] = {0xc6, 0xcc, 0xd8, 0xf0, 0xf0, 0xd8, 0xcc, 0xc6};
+byte L[8] = {0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xff, 0xff};
+byte M[8] = {0x81, 0xc3, 0xe7, 0xff, 0xdb, 0xc3, 0xc3, 0xc3};
+byte N[8] = {0xc3, 0xe3, 0xf3, 0xfb, 0xdf, 0xcf, 0xc7, 0xc3};
+byte O[8] = {0xff, 0xff, 0xc3, 0xc3, 0xc3, 0xc3, 0xff, 0xff};
+byte P[8] = {0xfe, 0xff, 0xc3, 0xc3, 0xff, 0xfe, 0xc0, 0xc0};
+byte Q[8] = {0x3c, 0x7e, 0xc3, 0xc3, 0xcb, 0xc7, 0x7e, 0x3d};
+byte R[8] = {0xfe, 0xc3, 0xc3, 0xc6, 0xfc, 0xfc, 0xc6, 0xc3};
+byte S[8] = {0x7e, 0xff, 0xc1, 0x7c, 0x3e, 0x83, 0xff, 0x7e};
+byte T[8] = {0xff, 0xff, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18};
+byte U[8] = {0xc3, 0xc3, 0xc3, 0xc3, 0xc3, 0xc3, 0xff, 0x7e};
+byte V[8] = {0xc3, 0xc3, 0xc3, 0xc3, 0xc3, 0x66, 0x3c, 0x18};
+byte W[8] = {0xc3, 0xc3, 0xc3, 0xc3, 0xdb, 0xff, 0xe7, 0xc3};
+byte X[8] = {0x42, 0xe7, 0x7e, 0x3c, 0x3c, 0x7e, 0xe7, 0x42};
+byte Y[8] = {0x42, 0xe7, 0x7e, 0x3c, 0x38, 0x70, 0xe0, 0x40};
+byte Z[8] = {0xff, 0xff, 0x06, 0x0c, 0x18, 0x30, 0x7f, 0xff};
+
+byte _1[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+byte _0[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+unsigned char *FULL[6] = {_1, _1, _1, _1, _1, _1};
+unsigned char *CLEAR[6] = {_0, _0, _0, _0, _0, _0};
+
+#define L1 2
+#define L2 3
+#define L3 4
+#define L4 5
+#define L5 6
+#define L6 7
+#define L7 8
+
+short word_counter = 0;
+short total_words = 4;
+
+/* Words [MAX 7 LETTERS]*/
+unsigned char *word1[6] = {T, A, B, L, E, X};
+unsigned char *word2[6] = {T, H, I, S, A, B};
+unsigned char *word3[6] = {C, O, O, L, Z, A};
+unsigned char *word4[6] = {T, E, S, T, X, Y};
+/* List of All Words */
+unsigned char **list[4] = {word1, word2, word3, word4};
+
+/* True_word_length in each Word */
+short word_length[4] = {2, 2, 2, 2};
+
+/* Key Sequence for corresponding Word */
+short pin_seq_word1[2] = {L1, L2};
+short pin_seq_word2[2] = {L2, L1};
+short pin_seq_word3[2] = {L1, L1};
+short pin_seq_word4[2] = {L2, L2};
+short *pin_seq[4] = {pin_seq_word1, pin_seq_word2, pin_seq_word3, pin_seq_word4};
+
+
+LedControl lc = LedControl(DIN, CLK, CS, 6);
+void setup() {
+  pinMode(L1, INPUT);
+  pinMode(L2, INPUT);
+  pinMode(L3, INPUT);
+  pinMode(L4, INPUT);
+  pinMode(L5, INPUT);
+  pinMode(L6, INPUT);
+  pinMode(L7, INPUT);
+
+  Serial.begin(9600);
+  //we have already set the number of devices when we created the LedControl
+  int devices = lc.getDeviceCount();
+  //we have to init all devices in a loop
+  for (int address = 0; address < devices; address++) {
+    /*The MAX72XX is in power-saving mode on startup*/
+    lc.shutdown(address, false);
+    /* Set the brightness to a medium values */
+    lc.setIntensity(address, 4);
+    /* and clear the display */
+    lc.clearDisplay(address);
+  }
+  int x;
+  for (x = 0; x < 6; x++) {
+    printByte(list[0][x], x);
+  }
+}
+
+void loop() {
+  int p1_status = 1;
+  int p2_status = 1;
+  int i, x, input;
+  //Serial.println("START");
+  for (i = 0; i < word_length[word_counter]; i++) {
+    p1_status = 1;
+    while (p1_status != 0) {
+      if (!digitalRead(pin_seq[word_counter][i])) {
+        p1_status = 0;
+        delay(1000);
+      }
+    }
+
+    if (i == word_length[word_counter] - 1) {
+      Serial.println("UPDATEING...");
+      if (word_counter < total_words - 1) {
+        word_counter++;
+        for (x = 0; x < 6; x++) {
+          printByte(FULL[x], x);
+        }
+        delay(1000);
+      }
+      else {
+        word_counter = 0;
+        for (x = 0; x < 6; x++) {
+          printByte(FULL[x], x);
+        }
+        delay(1000);
+        for (x = 0; x < 6; x++) {
+          printByte(CLEAR[x], x);
+        }
+        delay(1000);
+      }
+      for (x = 0; x < 6; x++) {
+        printByte(list[word_counter][x], x);
+      }
+    }
+  }
+}
+
+void printByte(byte character [], int i2c_address)
+{
+  int i = 0;
+  for (i = 0; i < 8; i++)
+  {
+    lc.setRow(i2c_address, i, character[i]);
+  }
+}
